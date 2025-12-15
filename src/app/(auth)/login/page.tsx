@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { Eye, EyeOff, LogIn, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,7 @@ import {
 import { useAuthStore } from "@/stores/auth-store";
 import { useToast } from "@/hooks/use-toast";
 import { loginSchema, type LoginFormData } from "@/lib/validations/auth";
+import { DEMO_CREDENTIALS } from "@/lib/mock-auth";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -30,10 +31,17 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
+
+  const fillDemoCredentials = (type: "admin" | "organizer" | "visitor") => {
+    const creds = DEMO_CREDENTIALS[type];
+    setValue("email", creds.email);
+    setValue("password", creds.password);
+  };
 
   const onSubmit = async (data: LoginFormData) => {
     try {
@@ -63,6 +71,38 @@ export default function LoginPage() {
         <CardDescription>
           Connectez-vous à votre compte YouthConnect Hub
         </CardDescription>
+        <div className="flex flex-wrap justify-center gap-2 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fillDemoCredentials("admin")}
+            className="text-xs"
+          >
+            <Users className="mr-1 h-3 w-3" />
+            Admin
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fillDemoCredentials("organizer")}
+            className="text-xs"
+          >
+            <Users className="mr-1 h-3 w-3" />
+            Organisateur
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fillDemoCredentials("visitor")}
+            className="text-xs"
+          >
+            <Users className="mr-1 h-3 w-3" />
+            Visiteur
+          </Button>
+        </div>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">

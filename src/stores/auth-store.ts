@@ -1,7 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { User } from "@/types";
+import { User, UserRole } from "@/types";
 import api from "@/lib/api";
+import { mockLogin, mockRegister } from "@/lib/mock-auth";
+
+const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
 
 interface AuthState {
   user: User | null;
@@ -24,11 +27,12 @@ interface RegisterData {
   firstName: string;
   lastName: string;
   phone?: string;
+  role: UserRole;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       token: null,
       isLoading: false,
@@ -37,10 +41,20 @@ export const useAuthStore = create<AuthState>()(
       login: async (email: string, password: string) => {
         set({ isLoading: true });
         try {
-          const response = await api.post("/auth/login", { email, password });
-          const { user, token } = response.data;
+          let user, token;
+
+          if (USE_MOCK_API) {
+            const result = await mockLogin(email, password);
+            user = result.user;
+            token = result.token;
+          } else {
+            const response = await api.post("/auth/login", { email, password });
+            user = response.data.user;
+            token = response.data.accessToken;
+          }
+
           localStorage.setItem("token", token);
-          set({ user, token, isAuthenticated: true, isLoading: false });
+          set({ user: user as User, token, isAuthenticated: true, isLoading: false });
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -50,10 +64,12 @@ export const useAuthStore = create<AuthState>()(
       register: async (data: RegisterData) => {
         set({ isLoading: true });
         try {
-          const response = await api.post("/auth/register", data);
-          const { user, token } = response.data;
-          localStorage.setItem("token", token);
-          set({ user, token, isAuthenticated: true, isLoading: false });
+          if (USE_MOCK_API) {
+            await mockRegister(data);
+          } else {
+            await api.post("/auth/register", data);
+          }
+          set({ isLoading: false });
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -68,7 +84,9 @@ export const useAuthStore = create<AuthState>()(
       forgotPassword: async (email: string) => {
         set({ isLoading: true });
         try {
-          await api.post("/auth/forgot-password", { email });
+          if (!USE_MOCK_API) {
+            await api.post("/auth/forgot-password", { email });
+          }
           set({ isLoading: false });
         } catch (error) {
           set({ isLoading: false });
@@ -79,7 +97,9 @@ export const useAuthStore = create<AuthState>()(
       resetPassword: async (token: string, password: string) => {
         set({ isLoading: true });
         try {
-          await api.post("/auth/reset-password", { token, password });
+          if (!USE_MOCK_API) {
+            await api.post("/auth/reset-password", { token, password });
+          }
           set({ isLoading: false });
         } catch (error) {
           set({ isLoading: false });
@@ -90,6 +110,10 @@ export const useAuthStore = create<AuthState>()(
       verifyOtp: async (email: string, otp: string) => {
         set({ isLoading: true });
         try {
+          if (USE_MOCK_API) {
+            set({ isLoading: false });
+            return;
+          }
           const response = await api.post("/auth/verify-otp", { email, otp });
           const { user, token } = response.data;
           localStorage.setItem("token", token);
@@ -103,6 +127,13 @@ export const useAuthStore = create<AuthState>()(
       updateProfile: async (data: Partial<User>) => {
         set({ isLoading: true });
         try {
+          if (USE_MOCK_API) {
+            set((state) => ({
+              user: state.user ? { ...state.user, ...data } : null,
+              isLoading: false,
+            }));
+            return;
+          }
           const response = await api.patch("/auth/profile", data);
           set({ user: response.data, isLoading: false });
         } catch (error) {

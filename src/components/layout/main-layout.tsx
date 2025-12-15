@@ -22,7 +22,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     if (!isAuthenticated) {
       router.push("/login");
     } else {
-      fetchNotifications().catch(console.error);
+      fetchNotifications().catch(() => {});
     }
   }, [isAuthenticated, router, fetchNotifications]);
 

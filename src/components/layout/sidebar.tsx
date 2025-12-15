@@ -15,19 +15,59 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Shield,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuthStore } from "@/stores/auth-store";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { UserRole } from "@/types";
 
-const navigation = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles?: UserRole[];
+}
+
+const allNavigation: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Membres", href: "/members", icon: Users },
+  {
+    name: "Gestion Plateforme",
+    href: "/admin",
+    icon: Shield,
+    roles: ["SUPER_ADMIN", "ADMIN"],
+  },
+  {
+    name: "Statistiques",
+    href: "/analytics",
+    icon: BarChart3,
+    roles: ["SUPER_ADMIN", "ADMIN"],
+  },
+  {
+    name: "Membres",
+    href: "/members",
+    icon: Users,
+    roles: ["SUPER_ADMIN", "ADMIN", "ORGANIZER"],
+  },
   { name: "Événements", href: "/events", icon: Calendar },
-  { name: "Cotisations", href: "/cotisations", icon: CreditCard },
-  { name: "Blog", href: "/blog", icon: FileText },
-  { name: "Ressources", href: "/resources", icon: FolderOpen },
+  {
+    name: "Cotisations",
+    href: "/cotisations",
+    icon: CreditCard,
+    roles: ["SUPER_ADMIN", "ADMIN", "ORGANIZER", "MEMBER"],
+  },
+  {
+    name: "Blog",
+    href: "/blog",
+    icon: FileText,
+  },
+  {
+    name: "Ressources",
+    href: "/resources",
+    icon: FolderOpen,
+  },
   { name: "Notifications", href: "/notifications", icon: Bell },
   { name: "Paramètres", href: "/settings", icon: Settings },
 ];
@@ -36,6 +76,32 @@ export function Sidebar() {
   const pathname = usePathname();
   const { logout, user } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
+
+  const navigation = useMemo(() => {
+    if (!user) return [];
+
+    return allNavigation.filter((item) => {
+      if (!item.roles) return true;
+      return item.roles.includes(user.role);
+    });
+  }, [user]);
+
+  const getRoleBadge = (role?: UserRole) => {
+    switch (role) {
+      case "SUPER_ADMIN":
+        return "Super Admin";
+      case "ADMIN":
+        return "Admin";
+      case "ORGANIZER":
+        return "Organisateur";
+      case "MEMBER":
+        return "Membre";
+      case "VISITOR":
+        return "Visiteur";
+      default:
+        return "Utilisateur";
+    }
+  };
 
   return (
     <aside
@@ -108,7 +174,7 @@ export function Sidebar() {
                   {user.firstName} {user.lastName}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {user.role}
+                  {getRoleBadge(user.role)}
                 </p>
               </div>
             </div>

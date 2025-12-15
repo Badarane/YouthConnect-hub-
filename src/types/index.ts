@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "responsable" | "membre";
+export type UserRole = "SUPER_ADMIN" | "ADMIN" | "ORGANIZER" | "MEMBER" | "VISITOR";
 
 export interface User {
   id: string;
@@ -155,6 +155,92 @@ export interface DashboardStats {
   recentPayments: Cotisation[];
   membersByGroup: { group: string; count: number }[];
   cotisationsByMonth: { month: string; amount: number }[];
+}
+
+export interface AdminDashboardStats {
+  totalUsers: number;
+  totalOrganizers: number;
+  totalVisitors: number;
+  totalEvents: number;
+  upcomingEvents: number;
+  completedEvents: number;
+  totalRevenue: number;
+  revenueThisMonth: number;
+  totalPayments: number;
+  pendingPayments: number;
+  recentRegistrations: RecentActivity[];
+  recentPayments: RecentPayment[];
+  usersByRole: { role: string; count: number }[];
+  eventsByStatus: { status: string; count: number }[];
+  revenueByMonth: { month: string; amount: number }[];
+}
+
+export interface OrganizerDashboardStats {
+  myEvents: number;
+  myUpcomingEvents: number;
+  myCompletedEvents: number;
+  totalParticipants: number;
+  totalRevenue: number;
+  revenueThisMonth: number;
+  avgParticipantsPerEvent: number;
+  myRecentEvents: OrganizerEvent[];
+  participantsByEvent: { eventTitle: string; count: number }[];
+  revenueByEvent: { eventTitle: string; amount: number }[];
+}
+
+export interface VisitorDashboardStats {
+  registeredEvents: number;
+  upcomingRegisteredEvents: number;
+  pastAttendedEvents: number;
+  totalPayments: number;
+  pendingPayments: number;
+  myUpcomingEvents: VisitorEvent[];
+  myRecentPayments: VisitorPayment[];
+}
+
+export interface RecentActivity {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  eventId: string;
+  eventTitle: string;
+  registeredAt: string;
+}
+
+export interface RecentPayment {
+  id: string;
+  userId: string;
+  userName: string;
+  amount: number;
+  status: string;
+  eventTitle?: string;
+  createdAt: string;
+}
+
+export interface OrganizerEvent {
+  id: string;
+  title: string;
+  slug: string;
+  startDate: string;
+  status: string;
+  participantCount: number;
+}
+
+export interface VisitorEvent {
+  id: string;
+  title: string;
+  startDate: string;
+  location: string;
+  status: string;
+}
+
+export interface VisitorPayment {
+  id: string;
+  amount: number;
+  status: string;
+  eventTitle?: string;
+  createdAt: string;
 }
 
 export interface PaginatedResponse<T> {

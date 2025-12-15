@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, UserPlus } from "lucide-react";
+import { Eye, EyeOff, UserPlus, Users, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuthStore } from "@/stores/auth-store";
 import { useToast } from "@/hooks/use-toast";
 import { registerSchema, type RegisterFormData } from "@/lib/validations/auth";
@@ -30,10 +31,17 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      role: undefined,
+    },
   });
+
+  const selectedRole = watch("role");
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
@@ -43,24 +51,26 @@ export default function RegisterPage() {
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
+        role: data.role,
       });
       toast({
         title: "Inscription réussie",
-        description: "Bienvenue sur YouthConnect Hub",
+        description: "Veuillez vous connecter avec vos identifiants",
         variant: "success",
       });
-      router.push("/dashboard");
-    } catch (error: any) {
+      router.push("/login");
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
       toast({
         title: "Erreur d'inscription",
-        description: error.response?.data?.message || "Une erreur est survenue",
+        description: err.response?.data?.message || "Une erreur est survenue",
         variant: "destructive",
       });
     }
   };
 
   return (
-    <Card>
+    <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
           <span className="text-2xl font-bold text-primary-foreground">Y</span>
@@ -72,6 +82,53 @@ export default function RegisterPage() {
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <Label>Type de compte</Label>
+            <RadioGroup
+              value={selectedRole}
+              onValueChange={(value) => setValue("role", value as "ORGANIZER" | "VISITOR")}
+              className="grid grid-cols-2 gap-4"
+            >
+              <div>
+                <RadioGroupItem
+                  value="VISITOR"
+                  id="visitor"
+                  className="peer sr-only"
+                />
+                <Label
+                  htmlFor="visitor"
+                  className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                >
+                  <User className="mb-3 h-6 w-6" />
+                  <span className="font-medium">Visiteur</span>
+                  <span className="text-xs text-muted-foreground text-center mt-1">
+                    Participez aux événements
+                  </span>
+                </Label>
+              </div>
+              <div>
+                <RadioGroupItem
+                  value="ORGANIZER"
+                  id="organizer"
+                  className="peer sr-only"
+                />
+                <Label
+                  htmlFor="organizer"
+                  className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                >
+                  <Users className="mb-3 h-6 w-6" />
+                  <span className="font-medium">Organisateur</span>
+                  <span className="text-xs text-muted-foreground text-center mt-1">
+                    Créez des événements
+                  </span>
+                </Label>
+              </div>
+            </RadioGroup>
+            {errors.role && (
+              <p className="text-sm text-destructive">{errors.role.message}</p>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">Prénom</Label>
@@ -107,7 +164,7 @@ export default function RegisterPage() {
             <Input
               id="phone"
               type="tel"
-              placeholder="+237 6XX XXX XXX"
+              placeholder="+229 XX XX XX XX"
               {...register("phone")}
             />
           </div>
@@ -135,6 +192,9 @@ export default function RegisterPage() {
                 )}
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Min. 8 caractères avec majuscule, minuscule et chiffre
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
